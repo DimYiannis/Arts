@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./src/output.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Sans+Extra+Condensed:wght@100&display=swap"
+      rel="stylesheet"
+    />
+    <script
+      src="https://unpkg.com/htmx.org@1.9.10"
+      integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
+      crossorigin="anonymous"
+    ></script>
+    <title>Art Gallery - Artworks</title>
+  </head>
+  <body class="bg-[#cdcbc8] min-h-screen flex flex-col">
+    <header class="bg-black/20 p-4">
+      <nav class="container mx-auto flex items-center justify-between">
+        <div class="text-white text-2xl font-bold">
+          <a href="index.html" class="hover:text-gray-300 transition">Arts Gallery</a>
+        </div>
+        <ul class="flex space-x-4">
+          <li><a href="index.html" class="text-white hover:text-gray-300 transition">Home</a></li>
+          <li><a href="#" class="text-white hover:text-gray-300 transition">About</a></li>
+          <li><a href="#" class="text-white hover:text-gray-300 transition">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4">
+      <h1 class="text-3xl font-bold mb-6 text-center">Featured Artworks</h1>
+      
+      <div
+        id="artworks-container"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        hx-get="https://api.artic.edu/api/v1/artworks?limit=9&fields=id,title,image_id,artist_display,date_display"
+        hx-trigger="load"
+        hx-target="#artworks-container"
+        hx-swap="innerHTML"
+      >
+        <p class="text-center col-span-full">Loading artworks...</p>
+      </div>
+
+      <div class="text-center mt-8">
+        <button
+          id="load-more"
+          class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition"
+          hx-get="https://api.artic.edu/api/v1/artworks?limit=9&fields=id,title,image_id,artist_display,date_display"
+          hx-target="#artworks-container"
+          hx-swap="beforeend"
+          hx-trigger="click"
+        >
+          Load More
+        </button>
+      </div>
+    </main>
+
+    <footer class="bg-black/20 text-white p-4 mt-8">
+      <div class="container mx-auto text-center">
+        <p>&copy; 2024 Arts Gallery. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <script>
+      let page = 1;
+
+      document.body.addEventListener('htmx:beforeSwap', function(event) {
+        if (event.detail.target.id === 'artworks-container') {
+          const response = JSON.parse(event.detail.xhr.response);
+          const data = response.data;
+          let html = '';
+
+          data.forEach(artwork => {
+            const imageUrl = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/300,/0/default.jpg`;
+            html += `
+              <div class="bg-white rounded-lg shadow-lg p-4">
+                <img src="${imageUrl}" alt="${artwork.title}" class="w-full h-48 object-cover mb-4 rounded-lg">
+                <h2 class="text-xl font-bold mb-2">${artwork.title}</h2>
+                <p class="mb-2"><strong>Artist:</strong> ${artwork.artist_display}</p>
+                <p><strong>Date:</strong> ${artwork.date_display}</p>
+              </div>
+            `;
+          });
+
+          event.detail.serverResponse = html;
+
+          page++;
+          document.getElementById('load-more').setAttribute('hx-get', `https://api.artic.edu/api/v1/artworks?page=${page}&limit=9&fields=id,title,image_id,artist_display,date_display`);
+        }
+      });
+    </script>
+  </body>
+</html>
