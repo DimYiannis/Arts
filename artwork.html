@@ -34,25 +34,14 @@
     <main class="flex-grow container mx-auto p-4">
       <h1 class="text-3xl font-bold mb-6 text-center">Featured Artworks</h1>
       
-      <div
-        id="artworks-container"
-        class="space-y-6"
-        hx-get="https://api.artic.edu/api/v1/artworks?limit=9&fields=id,title,image_id,artist_display,date_display,medium_display,dimensions,credit_line,place_of_origin,department_title,artwork_type_title,style_title,classification_title,subject_titles"
-        hx-trigger="load"
-        hx-target="#artworks-container"
-        hx-swap="innerHTML"
-      >
-        <p class="text-center">Loading artworks...</p>
+      <div id="artworks-container" class="space-y-6">
+        <!-- Artworks will be loaded here -->
       </div>
 
       <div class="text-center mt-8">
         <button
           id="load-more"
           class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition"
-          hx-get="https://api.artic.edu/api/v1/artworks?limit=9&fields=id,title,image_id,artist_display,date_display,medium_display,dimensions,credit_line,place_of_origin,department_title,artwork_type_title,style_title,classification_title,subject_titles"
-          hx-target="#artworks-container"
-          hx-swap="beforeend"
-          hx-trigger="click"
         >
           Load More
         </button>
@@ -66,45 +55,72 @@
     </footer>
 
     <script>
-      let page = 1;
+      let currentPage = 1;
+      let totalPages = 1;
 
-      document.body.addEventListener('htmx:beforeSwap', function(event) {
-        if (event.detail.target.id === 'artworks-container') {
-          const response = JSON.parse(event.detail.xhr.response);
-          const data = response.data;
-          let html = '';
+      function loadArtworks(page) {
+        const url = `https://api.artic.edu/api/v1/artworks?page=${page}&limit=9&fields=id,title,image_id,artist_display,date_display,medium_display,dimensions,credit_line,place_of_origin,department_title,artwork_type_title,style_title,classification_title,subject_titles`;
+        
+        fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            renderArtworks(data.data);
+            totalPages = data.pagination.total_pages;
+            updateLoadMoreButton();
+          })
+          .catch(error => console.error('Error:', error));
+      }
 
-          data.forEach(artwork => {
-            const imageUrl = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/800,/0/default.jpg`;
-            html += `
-              <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col mobile:flex-row w-full mb-8">
-                <div class="mobile:w-1/3 mobile:border-r mobile:border-gray-200">
-                  <img src="${imageUrl}" alt="${artwork.title}" class="w-full h-full object-cover">
-                </div>
-                <div class="mobile:w-2/3 p-4 mobile:p-6 tablet:p-8 text-black">
-                  <h2 class="text-xl mobile:text-2xl font-bold mb-4">${artwork.title}</h2>
-                  <p class="mb-2"><strong>Artist:</strong> ${artwork.artist_display}</p>
-                  <p class="mb-2"><strong>Date:</strong> ${artwork.date_display}</p>
-                  <p class="mb-2"><strong>Medium:</strong> ${artwork.medium_display || 'Not specified'}</p>
-                  <p class="mb-2"><strong>Dimensions:</strong> ${artwork.dimensions || 'Not specified'}</p>
-                  <p class="mb-2"><strong>Place of Origin:</strong> ${artwork.place_of_origin || 'Not specified'}</p>
-                  <p class="mb-2"><strong>Department:</strong> ${artwork.department_title || 'Not specified'}</p>
-                  <p class="mb-2"><strong>Type:</strong> ${artwork.artwork_type_title || 'Not specified'}</p>
-                  <p class="mb-2"><strong>Style:</strong> ${artwork.style_title || 'Not specified'}</p>
-                  <p class="mb-2"><strong>Classification:</strong> ${artwork.classification_title || 'Not specified'}</p>
-                  ${artwork.subject_titles && artwork.subject_titles.length > 0 ? 
-                    `<p class="mb-2"><strong>Subjects:</strong> ${artwork.subject_titles.join(', ')}</p>` : ''}
-                </div>
+      function renderArtworks(artworks) {
+        const container = document.getElementById('artworks-container');
+        let html = '';
+
+        artworks.forEach(artwork => {
+          const imageUrl = artwork.image_id 
+            ? `https://www.artic.edu/iiif/2/${artwork.image_id}/full/800,/0/default.jpg`
+            : 'path/to/placeholder-image.jpg';
+          html += `
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col mobile:flex-row w-full mb-8">
+              <div class="mobile:w-1/3 mobile:border-r mobile:border-gray-200">
+                <img src="${imageUrl}" alt="${artwork.title}" class="w-full h-full object-cover">
               </div>
-            `;
-          });
+              <div class="mobile:w-2/3 p-4 mobile:p-6 tablet:p-8 text-black">
+                <h2 class="text-xl mobile:text-2xl font-bold mb-4">${artwork.title}</h2>
+                <p class="mb-2"><strong>Artist:</strong> ${artwork.artist_display}</p>
+                <p class="mb-2"><strong>Date:</strong> ${artwork.date_display}</p>
+                <p class="mb-2"><strong>Medium:</strong> ${artwork.medium_display || 'Not specified'}</p>
+                <p class="mb-2"><strong>Dimensions:</strong> ${artwork.dimensions || 'Not specified'}</p>
+                <p class="mb-2"><strong>Place of Origin:</strong> ${artwork.place_of_origin || 'Not specified'}</p>
+                <p class="mb-2"><strong>Department:</strong> ${artwork.department_title || 'Not specified'}</p>
+                <p class="mb-2"><strong>Type:</strong> ${artwork.artwork_type_title || 'Not specified'}</p>
+                <p class="mb-2"><strong>Style:</strong> ${artwork.style_title || 'Not specified'}</p>
+                <p class="mb-2"><strong>Classification:</strong> ${artwork.classification_title || 'Not specified'}</p>
+                ${artwork.subject_titles && artwork.subject_titles.length > 0 ? 
+                  `<p class="mb-2"><strong>Subjects:</strong> ${artwork.subject_titles.join(', ')}</p>` : ''}
+              </div>
+            </div>
+          `;
+        });
 
-          event.detail.serverResponse = html;
+        container.innerHTML += html;
+      }
 
-          page++;
-          document.getElementById('load-more').setAttribute('hx-get', `https://api.artic.edu/api/v1/artworks?page=${page}&limit=9&fields=id,title,image_id,artist_display,date_display,medium_display,dimensions,credit_line,place_of_origin,department_title,artwork_type_title,style_title,classification_title,subject_titles`);
+      function updateLoadMoreButton() {
+        const loadMoreButton = document.getElementById('load-more');
+        if (currentPage >= totalPages) {
+          loadMoreButton.style.display = 'none';
+        } else {
+          loadMoreButton.style.display = 'inline-block';
         }
+      }
+
+      document.getElementById('load-more').addEventListener('click', function() {
+        currentPage++;
+        loadArtworks(currentPage);
       });
+
+      // Load initial artworks
+      loadArtworks(currentPage);
     </script>
   </body>
 </html>
