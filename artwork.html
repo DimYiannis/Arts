@@ -17,7 +17,7 @@
     ></script>
     <title>Art Gallery - Artworks</title>
   </head>
-  <body class="bg-[#cdcbc8] min-h-screen flex flex-col">
+  <body class="bg-main bg-cover min-h-screen flex flex-col">
     <header class="bg-black/20 p-4">
       <nav class="container mx-auto flex items-center justify-between">
         <div class="text-white text-2xl font-bold">
@@ -92,7 +92,8 @@
                   <p class="mb-2"><strong>Type:</strong> ${artwork.artwork_type_title || 'Not specified'}</p>
                   <p class="mb-2"><strong>Style:</strong> ${artwork.style_title || 'Not specified'}</p>
                   <p class="mb-2"><strong>Classification:</strong> ${artwork.classification_title || 'Not specified'}</p>
-                  <p class="mb-2"><strong>Subjects:</strong> ${artwork.subject_titles ? artwork.subject_titles.join(', ') : 'Not specified'}</p>
+                  ${artwork.subject_titles && artwork.subject_titles.length > 0 ? 
+                    `<p class="mb-2"><strong>Subjects:</strong> ${artwork.subject_titles.join(', ')}</p>` : ''}
                 </div>
               </div>
             `;
