@@ -1,6 +1,7 @@
 # Arts Gallery
 
-<img width="1453" alt="Screenshot 2024-09-27 at 9 02 08 PM" src="https://github.com/user-attachments/assets/64ddb982-d670-4452-bf51-84cb4e106697">
+![image](https://github.com/user-attachments/assets/1a553256-cba0-424f-b2b7-afd32ccd3598)
+
 
 
 ## Description
