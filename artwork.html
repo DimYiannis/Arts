@@ -36,20 +36,20 @@
       
       <div
         id="artworks-container"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        hx-get="https://api.artic.edu/api/v1/artworks?limit=9&fields=id,title,image_id,artist_display,date_display"
+        class="space-y-6"
+        hx-get="https://api.artic.edu/api/v1/artworks?limit=9&fields=id,title,image_id,artist_display,date_display,medium_display,dimensions,credit_line"
         hx-trigger="load"
         hx-target="#artworks-container"
         hx-swap="innerHTML"
       >
-        <p class="text-center col-span-full">Loading artworks...</p>
+        <p class="text-center">Loading artworks...</p>
       </div>
 
       <div class="text-center mt-8">
         <button
           id="load-more"
           class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition"
-          hx-get="https://api.artic.edu/api/v1/artworks?limit=9&fields=id,title,image_id,artist_display,date_display"
+          hx-get="https://api.artic.edu/api/v1/artworks?limit=9&fields=id,title,image_id,artist_display,date_display,medium_display,dimensions,credit_line"
           hx-target="#artworks-container"
           hx-swap="beforeend"
           hx-trigger="click"
@@ -75,13 +75,22 @@
           let html = '';
 
           data.forEach(artwork => {
-            const imageUrl = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/300,/0/default.jpg`;
+            const imageUrl = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/800,/0/default.jpg`;
             html += `
-              <div class="bg-white rounded-lg shadow-lg p-4">
-                <img src="${imageUrl}" alt="${artwork.title}" class="w-full h-48 object-cover mb-4 rounded-lg">
-                <h2 class="text-xl font-bold mb-2">${artwork.title}</h2>
-                <p class="mb-2"><strong>Artist:</strong> ${artwork.artist_display}</p>
-                <p><strong>Date:</strong> ${artwork.date_display}</p>
+              <div class="bg-white rounded-lg shadow-lg overflow-hidden flex w-full">
+                <div class="flex gap-4">
+                  <div class="sm:col-span-1">
+                    <img src="${imageUrl}" alt="${artwork.title}" class="w-full h-full object-cover">
+                  </div>
+                  <div class="sm:col-span-2 p-4">
+                    <h2 class="text-2xl font-bold text-black mb-2">${artwork.title}</h2>
+                    <p class="text-gray-700 mb-2"><strong>Artist:</strong> ${artwork.artist_display}</p>
+                    <p class="text-gray-700 mb-2"><strong>Date:</strong> ${artwork.date_display}</p>
+                    <p class="text-gray-700 mb-2"><strong>Medium:</strong> ${artwork.medium_display || 'Not specified'}</p>
+                    <p class="text-gray-700 mb-2"><strong>Dimensions:</strong> ${artwork.dimensions || 'Not specified'}</p>
+                    <p class="text-sm text-gray-500 mt-4">${artwork.credit_line || ''}</p>
+                  </div>
+                </div>
               </div>
             `;
           });
@@ -89,7 +98,7 @@
           event.detail.serverResponse = html;
 
           page++;
-          document.getElementById('load-more').setAttribute('hx-get', `https://api.artic.edu/api/v1/artworks?page=${page}&limit=9&fields=id,title,image_id,artist_display,date_display`);
+          document.getElementById('load-more').setAttribute('hx-get', `https://api.artic.edu/api/v1/artworks?page=${page}&limit=9&fields=id,title,image_id,artist_display,date_display,medium_display,dimensions,credit_line`);
         }
       });
     </script>
