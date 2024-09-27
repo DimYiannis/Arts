@@ -60,7 +60,7 @@
       <div class="text-center mt-8">
         <button
           id="load-more"
-          class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition"
+          class="bg-gray-200 hover:bg-gray-300 text-black font-bold py-2 px-4 rounded transition"
         >
           Load More
         </button>
@@ -76,18 +76,18 @@
     <!-- Departments Modal -->
     <div
       id="departments-modal"
-      class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center"
+      class="fixed inset-0 bg-black/20 hidden items-center justify-center"
     >
-      <div class="bg-white rounded-lg p-8 max-w-3xl w-full">
-        <h2 class="text-2xl font-bold mb-4 text-black">Departments</h2>
-        <div class="relative">
+      <div class="bg-black/40 rounded-lg p-8 max-w-4xl w-full border border-white/20">
+        <h2 class="text-2xl font-bold mb-4 text-white">Departments</h2>
+        <div class="flex items-center space-x-4">
           <button
             id="prev-department"
-            class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-l"
+            class="bg-neutral-200 hover:bg-neutral-300 text-black font-bold py-2 px-4 rounded-l transition"
           >
             &lt;
           </button>
-          <div id="departments-carousel" class="overflow-hidden">
+          <div id="departments-carousel" class="flex-grow overflow-hidden">
             <div
               id="departments-container"
               class="flex transition-transform duration-300 ease-in-out"
@@ -97,14 +97,14 @@
           </div>
           <button
             id="next-department"
-            class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-r"
+            class="bg-neutral-200 hover:bg-neutral-300 text-black font-bold py-2 px-4 rounded-r transition"
           >
             &gt;
           </button>
         </div>
         <button
           id="close-modal"
-          class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+          class="mt-4 bg-white hover:bg-neutral-300 text-black font-bold py-2 px-4 rounded transition"
         >
           Close
         </button>
@@ -133,10 +133,10 @@
           "departments-container"
         );
         departmentsContainer.innerHTML = "";
-        departments.forEach((department, index) => {
+        departments.forEach((department) => {
           const button = document.createElement("button");
           button.textContent = department.title;
-          button.className = `bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition mx-2 flex-shrink-0 ${
+          button.className = `bg-white hover:border-neutral-600 text-black border-2 border-neutral-400 font-bold py-2 px-4 rounded transition mx-2 flex-shrink-0 ${
             currentDepartment === department.id ? "ring-2 ring-white" : ""
           }`;
           button.addEventListener("click", () => {
@@ -145,16 +145,18 @@
           });
           departmentsContainer.appendChild(button);
         });
+
+        updateDepartmentCarousel(); // Initialize the carousel
       }
 
       function filterByDepartment(departmentId) {
         currentDepartment = departmentId;
         currentPage = 1;
         document.getElementById("artworks-container").innerHTML = "";
-        loadArtworks(currentPage);
+        loadArtworks(currentPage, true);
       }
 
-      function loadArtworks(page) {
+      function loadArtworks(page, newSearch = false) {
         let url = `https://api.artic.edu/api/v1/artworks?page=${page}&limit=9&fields=id,title,image_id,artist_display,date_display,medium_display,dimensions,credit_line,place_of_origin,department_title,artwork_type_title,style_title,classification_title,subject_titles`;
 
         if (currentDepartment) {
@@ -167,16 +169,16 @@
           .then((response) => response.json())
           .then((data) => {
             console.log("Received data:", data);
-            renderArtworks(data.data, page === 1);
+            renderArtworks(data.data, newSearch);
             totalPages = data.pagination.total_pages;
             updateLoadMoreButton();
           })
           .catch((error) => console.error("Error:", error));
       }
 
-      function renderArtworks(artworks, clearExisting = false) {
+      function renderArtworks(artworks, newSearch) {
         const container = document.getElementById("artworks-container");
-        let html = clearExisting ? "" : container.innerHTML;
+        let html = newSearch ? "" : container.innerHTML;
 
         artworks.forEach((artwork) => {
           const imageUrl = artwork.image_id
@@ -280,7 +282,14 @@
       document
         .getElementById("next-department")
         .addEventListener("click", function () {
-          if (currentDepartmentIndex < departments.length - 1) {
+          const container = document.getElementById("departments-container");
+          const carousel = document.getElementById("departments-carousel");
+          const buttonWidth = 150; // Approximate width of a department button
+          const visibleWidth = carousel.offsetWidth;
+          const totalWidth = container.scrollWidth;
+          const maxIndex = Math.floor((totalWidth - visibleWidth) / buttonWidth);
+
+          if (currentDepartmentIndex < maxIndex) {
             currentDepartmentIndex++;
             updateDepartmentCarousel();
           }
@@ -288,15 +297,34 @@
 
       function updateDepartmentCarousel() {
         const container = document.getElementById("departments-container");
+        const carousel = document.getElementById("departments-carousel");
         const buttonWidth = 150; // Approximate width of a department button
-        container.style.transform = `translateX(-${
-          currentDepartmentIndex * buttonWidth
-        }px)`;
+        const visibleWidth = carousel.offsetWidth;
+        const totalWidth = container.scrollWidth;
+        const maxScroll = totalWidth - visibleWidth;
+
+        let scrollPosition = -currentDepartmentIndex * buttonWidth;
+        scrollPosition = Math.max(Math.min(scrollPosition, 0), -maxScroll);
+
+        container.style.transform = `translateX(${scrollPosition}px)`;
+
+        // Update button states
+        document.getElementById("prev-department").disabled = currentDepartmentIndex === 0;
+        document.getElementById("next-department").disabled = currentDepartmentIndex >= Math.floor(maxScroll / buttonWidth);
       }
+
+      // Add this new function to handle window resizing
+      function handleResize() {
+        currentDepartmentIndex = 0; // Reset to the beginning when resizing
+        updateDepartmentCarousel();
+      }
+
+      // Add event listener for window resize
+      window.addEventListener('resize', handleResize);
 
       // Load departments and initial artworks
       loadDepartments();
-      loadArtworks(currentPage);
+      loadArtworks(currentPage, true);
     </script>
   </body>
 </html>
