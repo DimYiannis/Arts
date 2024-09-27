@@ -165,7 +165,7 @@
         
         departments.forEach((department, index) => {
           const departmentElement = document.createElement("div");
-          departmentElement.className = "flex-shrink-0 w-48 mx-2 bg-white/10 rounded-lg p-2 transition-transform hover:scale-105";
+          departmentElement.className = "flex-shrink-0 w-48 mx-2 bg-white rounded-lg p-2 transition-transform hover:scale-105";
           
           const img = document.createElement("img");
           img.src = departmentImages[department.id];
@@ -174,11 +174,11 @@
           
           const titleElement = document.createElement("p");
           titleElement.textContent = department.title;
-          titleElement.className = "text-white text-center text-sm font-semibold mb-2 h-12 overflow-hidden";
+          titleElement.className = "text-black text-center text-sm font-semibold mb-2 h-12 overflow-hidden";
           
           const button = document.createElement("button");
           button.textContent = "Select";
-          button.className = `bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded text-xs transition ${
+          button.className = `border-2 border-neutral-300 hover:border-neutral-500 text-black font-bold py-1 px-3 rounded text-xs transition ${
             currentDepartment === department.title ? "ring-2 ring-white" : ""
           }`;
           button.addEventListener("click", () => {
