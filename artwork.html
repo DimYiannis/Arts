@@ -84,6 +84,7 @@
           <button
             id="prev-department"
             class="bg-neutral-200/50 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-l transition"
+            aria-label="Previous departments"
           >
             &lt;
           </button>
@@ -98,6 +99,7 @@
           <button
             id="next-department"
             class="bg-neutral-200/50 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-r transition"
+            aria-label="Next departments"
           >
             &gt;
           </button>
@@ -111,69 +113,160 @@
       </div>
     </div>
 
+    <div id="loading" class="text-center hidden">
+      <p class="text-xl">Loading artworks...</p>
+    </div>
+
+    <div id="error" class="text-center hidden">
+      <p class="text-xl text-red-500">Error loading artworks. Please try again.</p>
+    </div>
+
     <script>
       let currentPage = 1;
       let totalPages = 1;
       let currentDepartment = null;
       let departments = [];
       let currentDepartmentIndex = 0;
+      const departmentsPerView = 5; // Adjust this number as needed
+      let departmentImages = {};
 
-      function loadDepartments() {
-        fetch("https://api.artic.edu/api/v1/departments?limit=100")
-          .then((response) => response.json())
-          .then((data) => {
-            departments = data.data;
-            renderDepartments();
-          })
-          .catch((error) => console.error("Error loading departments:", error));
+      async function loadDepartments() {
+        try {
+          const response = await fetch("https://api.artic.edu/api/v1/departments?limit=100");
+          const data = await response.json();
+          departments = data.data;
+          await fetchDepartmentImages();
+          renderDepartments();
+        } catch (error) {
+          console.error("Error loading departments:", error);
+        }
+      }
+
+      async function fetchDepartmentImages() {
+        for (const department of departments) {
+          try {
+            const response = await fetch(`https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(department.title)}&limit=1&fields=image_id`);
+            const data = await response.json();
+            if (data.data && data.data.length > 0 && data.data[0].image_id) {
+              departmentImages[department.id] = `https://www.artic.edu/iiif/2/${data.data[0].image_id}/full/200,/0/default.jpg`;
+            } else {
+              departmentImages[department.id] = 'https://via.placeholder.com/200x200.png?text=No+Image';
+            }
+          } catch (error) {
+            console.error(`Error fetching image for department ${department.title}:`, error);
+            departmentImages[department.id] = 'https://via.placeholder.com/200x200.png?text=No+Image';
+          }
+        }
       }
 
       function renderDepartments() {
-        const departmentsContainer = document.getElementById(
-          "departments-container"
-        );
+        const departmentsContainer = document.getElementById("departments-container");
         departmentsContainer.innerHTML = "";
-        departments.forEach((department) => {
+        
+        departments.forEach((department, index) => {
+          const departmentElement = document.createElement("div");
+          departmentElement.className = "flex-shrink-0 w-48 mx-2 bg-white/10 rounded-lg p-2 transition-transform hover:scale-105";
+          
+          const img = document.createElement("img");
+          img.src = departmentImages[department.id];
+          img.alt = `${department.title} thumbnail`;
+          img.className = "w-full h-32 object-cover rounded-t-lg mb-2";
+          
+          const titleElement = document.createElement("p");
+          titleElement.textContent = department.title;
+          titleElement.className = "text-white text-center text-sm font-semibold mb-2 h-12 overflow-hidden";
+          
           const button = document.createElement("button");
-          button.textContent = department.title;
-          button.className = `bg-white hover:border-neutral-600 text-black border-2 border-neutral-400 font-bold py-2 px-4 rounded transition mx-2 flex-shrink-0 ${
-            currentDepartment === department.id ? "ring-2 ring-white" : ""
+          button.textContent = "Select";
+          button.className = `bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded text-xs transition ${
+            currentDepartment === department.title ? "ring-2 ring-white" : ""
           }`;
           button.addEventListener("click", () => {
-            filterByDepartment(department.id);
+            filterByDepartment(department.title);
             closeModal();
           });
-          departmentsContainer.appendChild(button);
+
+          departmentElement.appendChild(img);
+          departmentElement.appendChild(titleElement);
+          departmentElement.appendChild(button);
+          departmentsContainer.appendChild(departmentElement);
         });
 
-        updateDepartmentCarousel(); // Initialize the carousel
+        updateDepartmentCarousel();
       }
 
-      function filterByDepartment(departmentId) {
-        currentDepartment = departmentId;
+      function updateDepartmentCarousel() {
+        const container = document.getElementById("departments-container");
+        const carousel = document.getElementById("departments-carousel");
+        const itemWidth = 200; // Width of each department item including margin
+        const visibleWidth = carousel.offsetWidth;
+        const totalWidth = departments.length * itemWidth;
+        const maxScroll = totalWidth - visibleWidth;
+
+        let scrollPosition = currentDepartmentIndex * itemWidth;
+        scrollPosition = Math.max(Math.min(scrollPosition, maxScroll), 0);
+
+        container.style.transform = `translateX(-${scrollPosition}px)`;
+
+        // Update button states
+        document.getElementById("prev-department").disabled = currentDepartmentIndex === 0;
+        document.getElementById("next-department").disabled = scrollPosition >= maxScroll;
+      }
+
+      function filterByDepartment(departmentTitle) {
+        currentDepartment = departmentTitle;
         currentPage = 1;
         document.getElementById("artworks-container").innerHTML = "";
         loadArtworks(currentPage, true);
       }
 
       function loadArtworks(page, newSearch = false) {
-        let url = `https://api.artic.edu/api/v1/artworks?page=${page}&limit=9&fields=id,title,image_id,artist_display,date_display,medium_display,dimensions,credit_line,place_of_origin,department_title,artwork_type_title,style_title,classification_title,subject_titles`;
+        const limit = 9; // Number of artworks per page
+        let url = `https://api.artic.edu/api/v1/artworks?page=${page}&limit=${limit}`;
+
+        // Fields we want to retrieve
+        const fields = [
+          'id', 'title', 'image_id', 'artist_display', 'date_display',
+          'medium_display', 'dimensions', 'credit_line', 'place_of_origin',
+          'department_title', 'artwork_type_title', 'style_title',
+          'classification_title', 'subject_titles'
+        ].join(',');
+
+        url += `&fields=${fields}`;
+
+        // Include additional related data
+        url += '&include=artist_pivots,place_pivots';
 
         if (currentDepartment) {
-          url += `&query[term][department_id]=${currentDepartment}`;
+          // Use department_title for filtering
+          url += `&query[term][department_title]=${encodeURIComponent(currentDepartment)}`;
         }
 
-        console.log("Fetching artworks from URL:", url);
+        const loadingElement = document.getElementById('loading');
+        const errorElement = document.getElementById('error');
+
+        loadingElement.classList.remove('hidden');
+        errorElement.classList.add('hidden');
 
         fetch(url)
-          .then((response) => response.json())
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
           .then((data) => {
-            console.log("Received data:", data);
             renderArtworks(data.data, newSearch);
             totalPages = data.pagination.total_pages;
             updateLoadMoreButton();
           })
-          .catch((error) => console.error("Error:", error));
+          .catch((error) => {
+            console.error("Error loading artworks:", error);
+            errorElement.classList.remove('hidden');
+          })
+          .finally(() => {
+            loadingElement.classList.add('hidden');
+          });
       }
 
       function renderArtworks(artworks, newSearch) {
@@ -284,10 +377,10 @@
         .addEventListener("click", function () {
           const container = document.getElementById("departments-container");
           const carousel = document.getElementById("departments-carousel");
-          const buttonWidth = 150; // Approximate width of a department button
+          const itemWidth = 200; // Width of each department item including margin
           const visibleWidth = carousel.offsetWidth;
-          const totalWidth = container.scrollWidth;
-          const maxIndex = Math.floor((totalWidth - visibleWidth) / buttonWidth);
+          const totalWidth = departments.length * itemWidth;
+          const maxIndex = Math.floor((totalWidth - visibleWidth) / itemWidth);
 
           if (currentDepartmentIndex < maxIndex) {
             currentDepartmentIndex++;
@@ -295,27 +388,7 @@
           }
         });
 
-      function updateDepartmentCarousel() {
-        const container = document.getElementById("departments-container");
-        const carousel = document.getElementById("departments-carousel");
-        const buttonWidth = 150; // Approximate width of a department button
-        const visibleWidth = carousel.offsetWidth;
-        const totalWidth = container.scrollWidth;
-        const maxScroll = totalWidth - visibleWidth;
-
-        let scrollPosition = -currentDepartmentIndex * buttonWidth;
-        scrollPosition = Math.max(Math.min(scrollPosition, 0), -maxScroll);
-
-        container.style.transform = `translateX(${scrollPosition}px)`;
-
-        // Update button states
-        document.getElementById("prev-department").disabled = currentDepartmentIndex === 0;
-        document.getElementById("next-department").disabled = currentDepartmentIndex >= Math.floor(maxScroll / buttonWidth);
-      }
-
-      // Add this new function to handle window resizing
       function handleResize() {
-        currentDepartmentIndex = 0; // Reset to the beginning when resizing
         updateDepartmentCarousel();
       }
 
