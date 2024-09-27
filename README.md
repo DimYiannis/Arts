@@ -1,5 +1,8 @@
 # Arts Gallery
 
+<img width="1453" alt="Screenshot 2024-09-27 at 9 02 08 PM" src="https://github.com/user-attachments/assets/64ddb982-d670-4452-bf51-84cb4e106697">
+
+
 ## Description
 
 Arts Gallery is a web application that showcases artworks from various departments, leveraging the Art Institute of Chicago's API. It provides an interactive and responsive interface for users to explore a wide range of artistic creations.
