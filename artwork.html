@@ -181,10 +181,7 @@
           button.className = `border-2 border-neutral-300 hover:border-neutral-500 text-black font-bold py-1 px-3 rounded text-xs transition ${
             currentDepartment === department.title ? "ring-2 ring-white" : ""
           }`;
-          button.addEventListener("click", () => {
-            filterByDepartment(department.title);
-            closeModal();
-          });
+          button.addEventListener("click", () => filterByDepartment(department.title));
 
           departmentElement.appendChild(img);
           departmentElement.appendChild(titleElement);
@@ -218,11 +215,12 @@
         currentPage = 1;
         document.getElementById("artworks-container").innerHTML = "";
         loadArtworks(currentPage, true);
+        closeModal();
       }
 
       function loadArtworks(page, newSearch = false) {
         const limit = 9; // Number of artworks per page
-        let url = `https://api.artic.edu/api/v1/artworks?page=${page}&limit=${limit}`;
+        let url = `https://api.artic.edu/api/v1/artworks/search`;
 
         // Fields we want to retrieve
         const fields = [
@@ -230,17 +228,16 @@
           'medium_display', 'dimensions', 'credit_line', 'place_of_origin',
           'department_title', 'artwork_type_title', 'style_title',
           'classification_title', 'subject_titles'
-        ].join(',');
+        ];
 
-        url += `&fields=${fields}`;
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+          fields: fields.join(','),
+          q: currentDepartment || ''
+        });
 
-        // Include additional related data
-        url += '&include=artist_pivots,place_pivots';
-
-        if (currentDepartment) {
-          // Use department_title for filtering
-          url += `&query[term][department_title]=${encodeURIComponent(currentDepartment)}`;
-        }
+        url += '?' + params.toString();
 
         const loadingElement = document.getElementById('loading');
         const errorElement = document.getElementById('error');
@@ -251,17 +248,22 @@
         fetch(url)
           .then((response) => {
             if (!response.ok) {
-              throw new Error('Network response was not ok');
+              throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
           })
           .then((data) => {
-            renderArtworks(data.data, newSearch);
-            totalPages = data.pagination.total_pages;
-            updateLoadMoreButton();
+            if (data.data && data.data.length > 0) {
+              renderArtworks(data.data, newSearch);
+              totalPages = data.pagination.total_pages;
+              updateLoadMoreButton();
+            } else {
+              throw new Error('No artworks found for this department');
+            }
           })
           .catch((error) => {
             console.error("Error loading artworks:", error);
+            errorElement.textContent = `Error: ${error.message}. Please check your internet connection and try again.`;
             errorElement.classList.remove('hidden');
           })
           .finally(() => {
