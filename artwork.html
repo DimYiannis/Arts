@@ -42,9 +42,12 @@
             </button>
           </li>
           <li>
-            <a href="#" class="text-white hover:text-gray-300 transition"
-              >Contact</a
+            <button
+              id="places-btn"
+              class="text-white hover:text-gray-300 transition"
             >
+              Places
+            </button>
           </li>
         </ul>
       </nav>
@@ -121,14 +124,77 @@
       <p class="text-xl text-red-500">Error loading artworks. Please try again.</p>
     </div>
 
+    <!-- Places Modal -->
+    <div
+      id="places-modal"
+      class="fixed inset-0 bg-black/20 hidden items-center justify-center"
+    >
+      <div class="bg-black/40 rounded-lg p-8 max-w-4xl w-full border border-white/20">
+        <h2 class="text-2xl font-bold mb-4 text-white">Places</h2>
+        <ul class="space-y-2">
+          <li>
+            <button data-place-id="United States" class="text-white hover:text-gray-300 transition place-button">
+              United States <em class="text-gray-400">(38826)</em>
+            </button>
+          </li>
+          <li>
+            <button data-place-id="France" class="text-white hover:text-gray-300 transition place-button">
+              France <em class="text-gray-400">(15177)</em>
+            </button>
+          </li>
+          <li>
+            <button data-place-id="Japan" class="text-white hover:text-gray-300 transition place-button">
+              Japan <em class="text-gray-400">(13908)</em>
+            </button>
+          </li>
+          <li>
+            <button data-place-id="England" class="text-white hover:text-gray-300 transition place-button">
+              England <em class="text-gray-400">(8464)</em>
+            </button>
+          </li>
+          <li>
+            <button data-place-id="Italy" class="text-white hover:text-gray-300 transition place-button">
+              Italy <em class="text-gray-400">(4909)</em>
+            </button>
+          </li>
+          <li>
+            <button data-place-id="Germany" class="text-white hover:text-gray-300 transition place-button">
+              Germany <em class="text-gray-400">(4477)</em>
+            </button>
+          </li>
+          <li>
+            <button data-place-id="China" class="text-white hover:text-gray-300 transition place-button">
+              China <em class="text-gray-400">(3963)</em>
+            </button>
+          </li>
+          <li>
+            <button data-place-id="Netherlands" class="text-white hover:text-gray-300 transition place-button">
+              Netherlands <em class="text-gray-400">(2187)</em>
+            </button>
+          </li>
+        </ul>
+        <button
+          id="close-places-modal"
+          class="mt-4 bg-white hover:bg-neutral-300 text-black font-bold py-2 px-4 rounded transition"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+
     <script>
       let currentPage = 1;
       let totalPages = 1;
+      const itemsPerPage = 12; // Default value from the API
       let currentDepartment = null;
       let departments = [];
       let currentDepartmentIndex = 0;
       const departmentsPerView = 5; // Adjust this number as needed
       let departmentImages = {};
+
+      const headers = new Headers({
+        'AIC-User-Agent': 'YourAppName (your@email.com)'
+      });
 
       async function loadDepartments() {
         try {
@@ -210,17 +276,31 @@
         document.getElementById("next-department").disabled = scrollPosition >= maxScroll;
       }
 
+      const RATE_LIMIT_DELAY = 1000; // 1 second delay between requests
+
       function filterByDepartment(departmentTitle) {
         currentDepartment = departmentTitle;
         currentPage = 1;
         document.getElementById("artworks-container").innerHTML = "";
-        loadArtworks(currentPage, true);
         closeModal();
+        
+        setTimeout(() => {
+          loadArtworks(currentPage, true);
+        }, RATE_LIMIT_DELAY);
       }
 
-      function loadArtworks(page, newSearch = false) {
-        const limit = 9; // Number of artworks per page
-        let url = `https://api.artic.edu/api/v1/artworks/search`;
+      let isLoading = false;
+
+      function loadArtworks(page, newSearch = false, customUrl = null) {
+        if (isLoading) {
+          console.log('Already loading artworks, request ignored');
+          return;
+        }
+
+        isLoading = true;
+
+        const limit = itemsPerPage;
+        let url = customUrl || `https://api.artic.edu/api/v1/artworks/search`;
 
         // Fields we want to retrieve
         const fields = [
@@ -228,16 +308,21 @@
           'medium_display', 'dimensions', 'credit_line', 'place_of_origin',
           'department_title', 'artwork_type_title', 'style_title',
           'classification_title', 'subject_titles'
-        ];
+        ].join(',');
 
         const params = new URLSearchParams({
           page: page.toString(),
           limit: limit.toString(),
-          fields: fields.join(','),
-          q: currentDepartment || ''
+          fields: fields,
         });
 
-        url += '?' + params.toString();
+        if (!customUrl) {
+          params.append('q', currentDepartment || currentPlace || '');
+        }
+
+        url += (url.includes('?') ? '&' : '?') + params.toString();
+
+        console.log('Fetching URL:', url);
 
         const loadingElement = document.getElementById('loading');
         const errorElement = document.getElementById('error');
@@ -245,17 +330,20 @@
         loadingElement.classList.remove('hidden');
         errorElement.classList.add('hidden');
 
-        fetch(url)
+        fetch(url, { headers })
           .then((response) => {
+            console.log('Response status:', response.status);
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
           })
           .then((data) => {
+            console.log('Data received:', data);
             if (data.data && data.data.length > 0) {
               renderArtworks(data.data, newSearch);
               totalPages = data.pagination.total_pages;
+              currentPage = data.pagination.current_page;
               updateLoadMoreButton();
             } else {
               throw new Error('No artworks found for this department');
@@ -263,11 +351,12 @@
           })
           .catch((error) => {
             console.error("Error loading artworks:", error);
-            errorElement.textContent = `Error: ${error.message}. Please check your internet connection and try again.`;
+            errorElement.textContent = `Error: ${error.message}. Please try again.`;
             errorElement.classList.remove('hidden');
           })
           .finally(() => {
             loadingElement.classList.add('hidden');
+            isLoading = false;
           });
       }
 
@@ -354,8 +443,9 @@
       document
         .getElementById("load-more")
         .addEventListener("click", function () {
-          currentPage++;
-          loadArtworks(currentPage);
+          if (currentPage < totalPages) {
+            loadArtworks(currentPage + 1, false);
+          }
         });
 
       document
@@ -396,6 +486,70 @@
 
       // Add event listener for window resize
       window.addEventListener('resize', handleResize);
+
+      let currentPlace = null;
+
+      function openPlacesModal() {
+        document.getElementById("places-modal").classList.remove("hidden");
+        document.getElementById("places-modal").classList.add("flex");
+      }
+
+      function closePlacesModal() {
+        document.getElementById("places-modal").classList.add("hidden");
+        document.getElementById("places-modal").classList.remove("flex");
+      }
+
+      function fetchArtworksByPlace(placeId, placeName) {
+        const apiUrl = `https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(placeId)}&fields=id,title,image_id,artist_display,date_display,medium_display,dimensions,place_of_origin,department_title,artwork_type_title,style_title,classification_title&limit=12`;
+        
+        console.log('Fetching artworks from:', apiUrl);
+        
+        fetch(apiUrl, { headers })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Artworks data:', data);
+            if (data.data && data.data.length > 0) {
+              renderArtworks(data.data, true);
+              totalPages = data.pagination.total_pages;
+              currentPage = data.pagination.current_page;
+              updateLoadMoreButton();
+            } else {
+              throw new Error(`No artworks found for ${placeName}`);
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching artworks:', error);
+            const errorElement = document.getElementById('error');
+            errorElement.textContent = `Error: ${error.message}. Please try again.`;
+            errorElement.classList.remove('hidden');
+          })
+          .finally(() => {
+            closePlacesModal();
+            const loadingElement = document.getElementById('loading');
+            loadingElement.classList.add('hidden');
+          });
+      }
+
+      // Update the event listeners for place buttons
+      document.querySelectorAll('.place-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const placeId = e.target.dataset.placeId;
+          const placeName = e.target.textContent.split('(')[0].trim();
+          fetchArtworksByPlace(placeId, placeName);
+        });
+      });
+
+      document
+        .getElementById("places-btn")
+        .addEventListener("click", openPlacesModal);
+      document
+        .getElementById("close-places-modal")
+        .addEventListener("click", closePlacesModal);
 
       // Load departments and initial artworks
       loadDepartments();
