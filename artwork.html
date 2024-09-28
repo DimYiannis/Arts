@@ -205,67 +205,31 @@
       id="styles-modal"
       class="fixed inset-0 bg-black/20 hidden items-center justify-center"
     >
-      <div class="bg-black/40 rounded-lg p-8 max-w-4xl w-full border border-white/20 flex flex-col">
-        <h2 class="text-2xl font-bold mb-6 text-white">Styles</h2>
-        <div class="flex justify-center mb-6">
-          <ul class="space-x-2 flex flex-wrap justify-center">
-            <li>
-              <button data-style-id="Japanese (culture or style)" 
-                      data-style-url="https://www.artic.edu/collection?style_ids=Japanese%20%28culture%20or%20style%29" 
-                      class="text-white hover:text-gray-300 transition style-button m-1">
-                Japanese (culture or style) <em>(7866)</em>
-              </button>
-            </li>
-            <li>
-              <button data-style-id="21st Century" 
-                      data-style-url="https://www.artic.edu/collection?style_ids=21st%20Century" 
-                      class="text-white hover:text-gray-300 transition style-button m-1">
-                21st Century <em>(4862)</em>
-              </button>
-            </li>
-            <li>
-              <button data-style-id="19th century" 
-                      data-style-url="https://www.artic.edu/collection?style_ids=19th%20century" 
-                      class="text-white hover:text-gray-300 transition style-button m-1">
-                19th century <em>(4806)</em>
-              </button>
-            </li>
-            <li>
-              <button data-style-id="20th Century" 
-                      data-style-url="https://www.artic.edu/collection?style_ids=20th%20Century" 
-                      class="text-white hover:text-gray-300 transition style-button m-1">
-                20th Century <em>(3927)</em>
-              </button>
-            </li>
-            <li>
-              <button data-style-id="Chinese (culture or style)" 
-                      data-style-url="https://www.artic.edu/collection?style_ids=Chinese%20%28culture%20or%20style%29" 
-                      class="text-white hover:text-gray-300 transition style-button m-1">
-                Chinese (culture or style) <em>(1989)</em>
-              </button>
-            </li>
-            <li>
-              <button data-style-id="Modernism" 
-                      data-style-url="https://www.artic.edu/collection?style_ids=Modernism" 
-                      class="text-white hover:text-gray-300 transition style-button m-1">
-                Modernism <em>(1736)</em>
-              </button>
-            </li>
-            <li>
-              <button data-style-id="Arts of the Americas" 
-                      data-style-url="https://www.artic.edu/collection?style_ids=Arts%20of%20the%20Americas" 
-                      class="text-white hover:text-gray-300 transition style-button m-1">
-                Arts of the Americas <em>(1497)</em>
-              </button>
-            </li>
-            <li>
-              <button data-style-id="americas" 
-                      data-style-url="https://www.artic.edu/collection?style_ids=americas" 
-                      class="text-white hover:text-gray-300 transition style-button m-1">
-                Americas <em>(1244)</em>
-              </button>
-            </li>
-          </ul>
+      <div class="bg-black/40 rounded-lg p-8 max-w-4xl w-full border border-white/20">
+        <h2 class="text-2xl font-bold mb-4 text-white">Styles</h2>
+        <div class="flex items-center space-x-4">
+          <button
+            id="prev-style"
+            class="bg-neutral-200/50 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-l transition"
+            aria-label="Previous styles"
+          >
+            &lt;
+          </button>
+          <div id="styles-carousel" class="flex-grow overflow-hidden">
+            <div
+              id="styles-container"
+              class="flex transition-transform duration-300 ease-in-out"
+            >
+              <!-- Styles will be loaded here -->
+            </div>
+          </div>
+          <button
+            id="next-style"
+            class="bg-neutral-200/50 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-r transition"
+            aria-label="Next styles"
+          >
+            &gt;
+          </button>
         </div>
         <button
           id="close-styles-modal"
@@ -282,14 +246,26 @@
       const itemsPerPage = 12; // Default value from the API
       let currentDepartment = null;
       let currentPlace = null;
-      let currentStyle = null; // Add this line
+      let currentStyle = null; 
       let departments = [];
-      let styles = []; // Add this line if not already present
+      let styles = [
+        { id: "Japanese (culture or style)", title: "Japanese (culture or style)"},
+        { id: "21st Century", title: "21st Century"},
+        { id: "19th century", title: "19th century"},
+        { id: "20th Century", title: "20th Century"},
+        { id: "Chinese (culture or style)", title: "Chinese (culture or style)"},
+        { id: "Modernism", title: "Modernism"},
+        { id: "Arts of the Americas", title: "Arts of the Americas"},
+        { id: "americas", title: "Americas"}
+      ];
       let isLoading = false;
       const RATE_LIMIT_DELAY = 1000; // 1 second delay between requests
       let currentDepartmentIndex = 0;
-      const departmentsPerView = 5; // Adjust this number as needed
+      const departmentsPerView = 5;
       let departmentImages = {};
+      let currentStyleIndex = 0;
+      const stylesPerView = 5;
+      let styleImages = {};
 
       const headers = new Headers({
         'AIC-User-Agent': 'YourAppName (your@email.com)'
@@ -702,6 +678,106 @@
       document
         .getElementById("close-styles-modal")
         .addEventListener("click", closeStylesModal);
+
+      async function fetchStyleImages() {
+        for (const style of styles) {
+          try {
+            const response = await fetch(`https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(style.title)}&limit=1&fields=image_id`);
+            const data = await response.json();
+            if (data.data && data.data.length > 0 && data.data[0].image_id) {
+              styleImages[style.id] = `https://www.artic.edu/iiif/2/${data.data[0].image_id}/full/200,/0/default.jpg`;
+            } else {
+              styleImages[style.id] = 'https://via.placeholder.com/200x200.png?text=No+Image';
+            }
+          } catch (error) {
+            console.error(`Error fetching image for style ${style.title}:`, error);
+            styleImages[style.id] = 'https://via.placeholder.com/200x200.png?text=No+Image';
+          }
+        }
+      }
+
+      function renderStyles() {
+        const stylesContainer = document.getElementById("styles-container");
+        stylesContainer.innerHTML = "";
+        
+        styles.forEach((style) => {
+          const styleElement = document.createElement("div");
+          styleElement.className = "flex-shrink-0 w-48 mx-2 bg-white rounded-lg p-2 transition-transform hover:scale-105";
+          
+          const img = document.createElement("img");
+          img.src = styleImages[style.id] || 'https://via.placeholder.com/200x200.png?text=Loading...';
+          img.alt = `${style.title} thumbnail`;
+          img.className = "w-full h-32 object-cover rounded-t-lg mb-2";
+          
+          const titleElement = document.createElement("p");
+          titleElement.textContent = style.title;
+          titleElement.className = "text-black text-center text-sm font-semibold mb-2 h-12 overflow-hidden";
+          
+          const button = document.createElement("button");
+          button.textContent = "Select";
+          button.className = "bg-neutral-200/90 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-l transition w-full";
+          button.addEventListener("click", () => fetchArtworksByStyle(style.id, style.title));
+
+          styleElement.appendChild(img);
+          styleElement.appendChild(titleElement);
+          styleElement.appendChild(button);
+          stylesContainer.appendChild(styleElement);
+        });
+
+        updateStyleCarousel();
+      }
+
+      function updateStyleCarousel() {
+        const container = document.getElementById("styles-container");
+        const carousel = document.getElementById("styles-carousel");
+        const itemWidth = 200; // Width of each style item including margin
+        const visibleWidth = carousel.offsetWidth;
+        const totalWidth = styles.length * itemWidth;
+        const maxScroll = totalWidth - visibleWidth;
+
+        let scrollPosition = currentStyleIndex * itemWidth;
+        scrollPosition = Math.max(Math.min(scrollPosition, maxScroll), 0);
+
+        container.style.transform = `translateX(-${scrollPosition}px)`;
+
+        // Update button states
+        document.getElementById("prev-style").disabled = currentStyleIndex === 0;
+        document.getElementById("next-style").disabled = scrollPosition >= maxScroll;
+      }
+
+      document
+        .getElementById("prev-style")
+        .addEventListener("click", function () {
+          if (currentStyleIndex > 0) {
+            currentStyleIndex--;
+            updateStyleCarousel();
+          }
+        });
+
+      document
+        .getElementById("next-style")
+        .addEventListener("click", function () {
+          const container = document.getElementById("styles-container");
+          const carousel = document.getElementById("styles-carousel");
+          const itemWidth = 200; // Width of each style item including margin
+          const visibleWidth = carousel.offsetWidth;
+          const totalWidth = styles.length * itemWidth;
+          const maxIndex = Math.floor((totalWidth - visibleWidth) / itemWidth);
+
+          if (currentStyleIndex < maxIndex) {
+            currentStyleIndex++;
+            updateStyleCarousel();
+          }
+        });
+
+      // Update the initial load to fetch style images before rendering
+      async function initializeStyles() {
+        await fetchStyleImages();
+        renderStyles();
+      }
+
+      // Call initializeStyles when the page loads
+      initializeStyles();
 
       // Load departments and initial artworks
       loadDepartments();
