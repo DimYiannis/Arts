@@ -46,7 +46,15 @@
               id="places-btn"
               class="text-white hover:text-gray-300 transition"
             >
-              Places
+              Place of Origin 
+            </button>
+          </li>
+          <li>
+            <button
+              id="styles-btn"
+              class="text-white hover:text-gray-300 transition"
+            >
+              Styles
             </button>
           </li>
         </ul>
@@ -129,52 +137,138 @@
       id="places-modal"
       class="fixed inset-0 bg-black/20 hidden items-center justify-center"
     >
-      <div class="bg-black/40 rounded-lg p-8 max-w-4xl w-full border border-white/20">
-        <h2 class="text-2xl font-bold mb-4 text-white">Places</h2>
-        <ul class="space-y-2">
-          <li>
-            <button data-place-id="United States" class="text-white hover:text-gray-300 transition place-button">
-              United States <em class="text-gray-400">(38826)</em>
-            </button>
-          </li>
-          <li>
-            <button data-place-id="France" class="text-white hover:text-gray-300 transition place-button">
-              France <em class="text-gray-400">(15177)</em>
-            </button>
-          </li>
-          <li>
-            <button data-place-id="Japan" class="text-white hover:text-gray-300 transition place-button">
-              Japan <em class="text-gray-400">(13908)</em>
-            </button>
-          </li>
-          <li>
-            <button data-place-id="England" class="text-white hover:text-gray-300 transition place-button">
-              England <em class="text-gray-400">(8464)</em>
-            </button>
-          </li>
-          <li>
-            <button data-place-id="Italy" class="text-white hover:text-gray-300 transition place-button">
-              Italy <em class="text-gray-400">(4909)</em>
-            </button>
-          </li>
-          <li>
-            <button data-place-id="Germany" class="text-white hover:text-gray-300 transition place-button">
-              Germany <em class="text-gray-400">(4477)</em>
-            </button>
-          </li>
-          <li>
-            <button data-place-id="China" class="text-white hover:text-gray-300 transition place-button">
-              China <em class="text-gray-400">(3963)</em>
-            </button>
-          </li>
-          <li>
-            <button data-place-id="Netherlands" class="text-white hover:text-gray-300 transition place-button">
-              Netherlands <em class="text-gray-400">(2187)</em>
-            </button>
-          </li>
-        </ul>
+      <div class="bg-black/40 rounded-lg p-8 max-w-4xl w-full border border-white/20 flex flex-col">
+        <h2 class="text-2xl font-bold mb-6 text-white">Places</h2>
+        <div class="flex justify-center mb-6">
+          <ul class="space-x-2 flex flex-wrap justify-center">
+            <li>
+              <button data-place-id="United States" 
+              class="bg-neutral-200/90 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-l transition">
+                United States 
+              </button>
+            </li>
+            <li>
+              <button data-place-id="France" 
+              class="bg-neutral-200/90 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-l transition">
+                France 
+              </button>
+            </li>
+            <li>
+              <button data-place-id="Japan" 
+              class="bg-neutral-200/90 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-l transition">
+                Japan
+              </button>
+            </li>
+            <li>
+              <button data-place-id="England" 
+              class="bg-neutral-200/90 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-l transition">
+                England 
+              </button>
+            </li>
+            <li>
+              <button data-place-id="Italy" 
+              class="bg-neutral-200/90 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-l transition">
+                Italy 
+              </button>
+            </li>
+            <li>
+              <button data-place-id="Germany" 
+              class="bg-neutral-200/90 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-l transition">
+                Germany 
+              </button>
+            </li>
+            <li>
+              <button data-place-id="China" 
+              class="bg-neutral-200/90 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-l transition">
+                China 
+              </button>
+            </li>
+            <li>
+              <button data-place-id="Netherlands" 
+              class="bg-neutral-200/90 hover:bg-neutral-200 text-black font-bold py-2 px-4 rounded-l transition">
+                Netherlands 
+              </button>
+            </li>
+          </ul>
+        </div>
         <button
           id="close-places-modal"
+          class="mt-4 bg-white hover:bg-neutral-300 text-black font-bold py-2 px-4 rounded transition grid place-self-start"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+
+    <!-- Styles Modal -->
+    <div
+      id="styles-modal"
+      class="fixed inset-0 bg-black/20 hidden items-center justify-center"
+    >
+      <div class="bg-black/40 rounded-lg p-8 max-w-4xl w-full border border-white/20 flex flex-col">
+        <h2 class="text-2xl font-bold mb-6 text-white">Styles</h2>
+        <div class="flex justify-center mb-6">
+          <ul class="space-x-2 flex flex-wrap justify-center">
+            <li>
+              <button data-style-id="Japanese (culture or style)" 
+                      data-style-url="https://www.artic.edu/collection?style_ids=Japanese%20%28culture%20or%20style%29" 
+                      class="text-white hover:text-gray-300 transition style-button m-1">
+                Japanese (culture or style) <em>(7866)</em>
+              </button>
+            </li>
+            <li>
+              <button data-style-id="21st Century" 
+                      data-style-url="https://www.artic.edu/collection?style_ids=21st%20Century" 
+                      class="text-white hover:text-gray-300 transition style-button m-1">
+                21st Century <em>(4862)</em>
+              </button>
+            </li>
+            <li>
+              <button data-style-id="19th century" 
+                      data-style-url="https://www.artic.edu/collection?style_ids=19th%20century" 
+                      class="text-white hover:text-gray-300 transition style-button m-1">
+                19th century <em>(4806)</em>
+              </button>
+            </li>
+            <li>
+              <button data-style-id="20th Century" 
+                      data-style-url="https://www.artic.edu/collection?style_ids=20th%20Century" 
+                      class="text-white hover:text-gray-300 transition style-button m-1">
+                20th Century <em>(3927)</em>
+              </button>
+            </li>
+            <li>
+              <button data-style-id="Chinese (culture or style)" 
+                      data-style-url="https://www.artic.edu/collection?style_ids=Chinese%20%28culture%20or%20style%29" 
+                      class="text-white hover:text-gray-300 transition style-button m-1">
+                Chinese (culture or style) <em>(1989)</em>
+              </button>
+            </li>
+            <li>
+              <button data-style-id="Modernism" 
+                      data-style-url="https://www.artic.edu/collection?style_ids=Modernism" 
+                      class="text-white hover:text-gray-300 transition style-button m-1">
+                Modernism <em>(1736)</em>
+              </button>
+            </li>
+            <li>
+              <button data-style-id="Arts of the Americas" 
+                      data-style-url="https://www.artic.edu/collection?style_ids=Arts%20of%20the%20Americas" 
+                      class="text-white hover:text-gray-300 transition style-button m-1">
+                Arts of the Americas <em>(1497)</em>
+              </button>
+            </li>
+            <li>
+              <button data-style-id="americas" 
+                      data-style-url="https://www.artic.edu/collection?style_ids=americas" 
+                      class="text-white hover:text-gray-300 transition style-button m-1">
+                Americas <em>(1244)</em>
+              </button>
+            </li>
+          </ul>
+        </div>
+        <button
+          id="close-styles-modal"
           class="mt-4 bg-white hover:bg-neutral-300 text-black font-bold py-2 px-4 rounded transition"
         >
           Close
@@ -187,7 +281,12 @@
       let totalPages = 1;
       const itemsPerPage = 12; // Default value from the API
       let currentDepartment = null;
+      let currentPlace = null;
+      let currentStyle = null; // Add this line
       let departments = [];
+      let styles = []; // Add this line if not already present
+      let isLoading = false;
+      const RATE_LIMIT_DELAY = 1000; // 1 second delay between requests
       let currentDepartmentIndex = 0;
       const departmentsPerView = 5; // Adjust this number as needed
       let departmentImages = {};
@@ -276,8 +375,6 @@
         document.getElementById("next-department").disabled = scrollPosition >= maxScroll;
       }
 
-      const RATE_LIMIT_DELAY = 1000; // 1 second delay between requests
-
       function filterByDepartment(departmentTitle) {
         currentDepartment = departmentTitle;
         currentPage = 1;
@@ -289,9 +386,7 @@
         }, RATE_LIMIT_DELAY);
       }
 
-      let isLoading = false;
-
-      function loadArtworks(page, newSearch = false, customUrl = null) {
+      function loadArtworks(page, newSearch = false) {
         if (isLoading) {
           console.log('Already loading artworks, request ignored');
           return;
@@ -300,9 +395,8 @@
         isLoading = true;
 
         const limit = itemsPerPage;
-        let url = customUrl || `https://api.artic.edu/api/v1/artworks/search`;
+        let url = `https://api.artic.edu/api/v1/artworks/search`;
 
-        // Fields we want to retrieve
         const fields = [
           'id', 'title', 'image_id', 'artist_display', 'date_display',
           'medium_display', 'dimensions', 'credit_line', 'place_of_origin',
@@ -316,11 +410,9 @@
           fields: fields,
         });
 
-        if (!customUrl) {
-          params.append('q', currentDepartment || currentPlace || '');
-        }
+        params.append('q', currentDepartment || currentPlace || currentStyle || '');
 
-        url += (url.includes('?') ? '&' : '?') + params.toString();
+        url += '?' + params.toString();
 
         console.log('Fetching URL:', url);
 
@@ -487,8 +579,6 @@
       // Add event listener for window resize
       window.addEventListener('resize', handleResize);
 
-      let currentPlace = null;
-
       function openPlacesModal() {
         document.getElementById("places-modal").classList.remove("hidden");
         document.getElementById("places-modal").classList.add("flex");
@@ -550,6 +640,68 @@
       document
         .getElementById("close-places-modal")
         .addEventListener("click", closePlacesModal);
+
+      function fetchArtworksByStyle(styleId, styleName) {
+        const apiUrl = `https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(styleId)}&fields=id,title,image_id,artist_display,date_display,medium_display,dimensions,place_of_origin,department_title,artwork_type_title,style_title,classification_title&limit=12`;
+        
+        console.log('Fetching artworks from:', apiUrl);
+        
+        fetch(apiUrl, { headers })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Artworks data:', data);
+            if (data.data && data.data.length > 0) {
+              renderArtworks(data.data, true);
+              totalPages = data.pagination.total_pages;
+              currentPage = data.pagination.current_page;
+              updateLoadMoreButton();
+            } else {
+              throw new Error(`No artworks found for ${styleName}`);
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching artworks:', error);
+            const errorElement = document.getElementById('error');
+            errorElement.textContent = `Error: ${error.message}. Please try again.`;
+            errorElement.classList.remove('hidden');
+          })
+          .finally(() => {
+            closeStylesModal();
+            const loadingElement = document.getElementById('loading');
+            loadingElement.classList.add('hidden');
+          });
+      }
+
+      // Update event listeners for style buttons
+      document.querySelectorAll('.style-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const styleId = e.target.dataset.styleId;
+          const styleName = e.target.textContent.split('(')[0].trim();
+          fetchArtworksByStyle(styleId, styleName);
+        });
+      });
+
+      function openStylesModal() {
+        document.getElementById("styles-modal").classList.remove("hidden");
+        document.getElementById("styles-modal").classList.add("flex");
+      }
+
+      function closeStylesModal() {
+        document.getElementById("styles-modal").classList.add("hidden");
+        document.getElementById("styles-modal").classList.remove("flex");
+      }
+
+      document
+        .getElementById("styles-btn")
+        .addEventListener("click", openStylesModal);
+      document
+        .getElementById("close-styles-modal")
+        .addEventListener("click", closeStylesModal);
 
       // Load departments and initial artworks
       loadDepartments();
