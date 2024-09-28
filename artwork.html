@@ -240,6 +240,16 @@
       </div>
     </div>
 
+    <!-- Add this new modal for the full-size image -->
+    <div id="image-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50">
+      <div class="max-w-4xl w-full p-4">
+        <img id="modal-image" src="" alt="Full-size artwork" class="max-w-full max-h-[90vh] object-contain mx-auto">
+        <button id="close-image-modal" class="mt-4 bg-white hover:bg-gray-200 text-black font-bold py-2 px-4 rounded transition">
+          Close
+        </button>
+      </div>
+    </div>
+
     <script>
       let currentPage = 1;
       let totalPages = 1;
@@ -451,54 +461,33 @@
           html += `
             <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col mobile:flex-row w-full mb-8">
               <div class="mobile:w-1/3 mobile:border-r mobile:border-gray-200">
-                <img src="${imageUrl}" alt="${
-            artwork.title
-          }" class="w-full h-full object-cover">
+                <img src="${imageUrl}" alt="${artwork.title}" class="w-full h-full object-cover cursor-pointer artwork-image" data-full-image="${imageUrl.replace('/800,/', '/full/')}">
               </div>
               <div class="mobile:w-2/3 p-4 mobile:p-6 tablet:p-8 text-black">
-                <h2 class="text-xl mobile:text-2xl font-bold mb-4">${
-                  artwork.title
-                }</h2>
-                <p class="mb-2"><strong>Artist:</strong> ${
-                  artwork.artist_display
-                }</p>
-                <p class="mb-2"><strong>Date:</strong> ${
-                  artwork.date_display
-                }</p>
-                <p class="mb-2"><strong>Medium:</strong> ${
-                  artwork.medium_display || "Not specified"
-                }</p>
-                <p class="mb-2"><strong>Dimensions:</strong> ${
-                  artwork.dimensions || "Not specified"
-                }</p>
-                <p class="mb-2"><strong>Place of Origin:</strong> ${
-                  artwork.place_of_origin || "Not specified"
-                }</p>
-                <p class="mb-2"><strong>Department:</strong> ${
-                  artwork.department_title || "Not specified"
-                }</p>
-                <p class="mb-2"><strong>Type:</strong> ${
-                  artwork.artwork_type_title || "Not specified"
-                }</p>
-                <p class="mb-2"><strong>Style:</strong> ${
-                  artwork.style_title || "Not specified"
-                }</p>
-                <p class="mb-2"><strong>Classification:</strong> ${
-                  artwork.classification_title || "Not specified"
-                }</p>
-                ${
-                  artwork.subject_titles && artwork.subject_titles.length > 0
-                    ? `<p class="mb-2"><strong>Subjects:</strong> ${artwork.subject_titles.join(
-                        ", "
-                      )}</p>`
-                    : ""
-                }
+                <h2 class="text-xl mobile:text-2xl font-bold mb-4">${artwork.title}</h2>
+                <p class="mb-2"><strong>Artist:</strong> ${artwork.artist_display}</p>
+                <p class="mb-2"><strong>Date:</strong> ${artwork.date_display}</p>
+                <p class="mb-2"><strong>Medium:</strong> ${artwork.medium_display || "Not specified"}</p>
+                <p class="mb-2"><strong>Dimensions:</strong> ${artwork.dimensions || "Not specified"}</p>
+                <p class="mb-2"><strong>Place of Origin:</strong> ${artwork.place_of_origin || "Not specified"}</p>
+                <p class="mb-2"><strong>Department:</strong> ${artwork.department_title || "Not specified"}</p>
+                <p class="mb-2"><strong>Type:</strong> ${artwork.artwork_type_title || "Not specified"}</p>
+                <p class="mb-2"><strong>Style:</strong> ${artwork.style_title || "Not specified"}</p>
+                <p class="mb-2"><strong>Classification:</strong> ${artwork.classification_title || "Not specified"}</p>
+                ${artwork.subject_titles && artwork.subject_titles.length > 0 ? `<p class="mb-2"><strong>Subjects:</strong> ${artwork.subject_titles.join(", ")}</p>` : ""}
               </div>
             </div>
           `;
         });
 
         container.innerHTML = html;
+
+        // Add click event listeners to the artwork images
+        document.querySelectorAll('.artwork-image').forEach(img => {
+          img.addEventListener('click', function() {
+            openImageModal(this.dataset.fullImage, this.alt);
+          });
+        });
       }
 
       function updateLoadMoreButton() {
@@ -764,6 +753,31 @@
       // Load departments and initial artworks
       loadDepartments();
       loadArtworks(currentPage, true);
+
+      function openImageModal(imageUrl, imageAlt) {
+        const modal = document.getElementById('image-modal');
+        const modalImage = document.getElementById('modal-image');
+        modalImage.src = imageUrl;
+        modalImage.alt = imageAlt;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeImageModal() {
+        const modal = document.getElementById('image-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      // Add event listener for closing the image modal
+      document.getElementById('close-image-modal').addEventListener('click', closeImageModal);
+
+      // Close the modal when clicking outside the image
+      document.getElementById('image-modal').addEventListener('click', function(event) {
+        if (event.target === this) {
+          closeImageModal();
+        }
+      });
     </script>
   </body>
 </html>
