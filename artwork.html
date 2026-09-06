@@ -242,8 +242,10 @@
 
     <!-- full-size image -->
     <div id="image-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50">
-      <div class="max-w-4xl w-full p-4">
-        <img id="modal-image" src="" alt="Full-size artwork" class="max-w-full max-h-[90vh] object-contain mx-auto">
+      <div class="max-w-4xl w-full p-4 text-center">
+        <p id="modal-loading" class="text-white text-lg py-8 hidden">Loading image&hellip;</p>
+        <p id="modal-error" class="text-white text-lg py-8 hidden">Sorry, this image could not be loaded.</p>
+        <img id="modal-image" src="" alt="Full-size artwork" class="max-w-full max-h-[90vh] object-contain mx-auto hidden">
         <button id="close-image-modal" class="mt-4 bg-white hover:bg-gray-200 text-black font-bold py-2 px-4 rounded transition">
           Close
         </button>
@@ -450,23 +452,46 @@
           });
       }
 
+      function escapeHtml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      // Titles such as 'Mother\'s Day, from the series "Born Hip"' contain
+      // quotes that would otherwise terminate the attribute early and swallow
+      // the class and data-* attributes that follow it.
+      function escapeAttr(value) {
+        return escapeHtml(value).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      }
+
+      function iiifUrl(imageId, size) {
+        return `https://www.artic.edu/iiif/2/${imageId}/full/${size}/0/default.jpg`;
+      }
+
       function renderArtworks(artworks, newSearch) {
         const container = document.getElementById("artworks-container");
         let html = newSearch ? "" : container.innerHTML;
 
         artworks.forEach((artwork) => {
-          const imageUrl = artwork.image_id
-            ? `https://www.artic.edu/iiif/2/${artwork.image_id}/full/800,/0/default.jpg`
+          // The Art Institute only serves pre-generated IIIF derivatives at
+          // 843px and 1686px. Any other size (including /full/) is refused.
+          const thumbUrl = artwork.image_id
+            ? iiifUrl(artwork.image_id, "843,")
             : "path/to/placeholder-image.jpg";
+          const fullUrl = artwork.image_id
+            ? iiifUrl(artwork.image_id, "1686,")
+            : "";
           html += `
             <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col mobile:flex-row w-full mb-8">
               <div class="mobile:w-1/3 mobile:border-r mobile:border-gray-200 origin-center hover:rotate-12 transition duration-300 ease-in-out">
-                <img src="${imageUrl}" alt="${artwork.title}" class="w-full h-full object-cover cursor-pointer artwork-image" data-full-image="${imageUrl.replace('/800,/', '/full/')}">
+                <img src="${thumbUrl}" alt="${escapeAttr(artwork.title)}" class="w-full h-full object-cover cursor-pointer artwork-image" data-full-image="${escapeAttr(fullUrl)}" data-fallback-image="${escapeAttr(thumbUrl)}">
               </div>
               <div class="mobile:w-2/3 p-4 mobile:p-6 tablet:p-8 text-black">
-                <h2 class="text-xl mobile:text-2xl font-bold mb-4">${artwork.title}</h2>
-                <p class="mb-2"><strong>Artist:</strong> ${artwork.artist_display}</p>
-                <p class="mb-2"><strong>Date:</strong> ${artwork.date_display}</p>
+                <h2 class="text-xl mobile:text-2xl font-bold mb-4">${escapeHtml(artwork.title)}</h2>
+                <p class="mb-2"><strong>Artist:</strong> ${escapeHtml(artwork.artist_display)}</p>
+                <p class="mb-2"><strong>Date:</strong> ${escapeHtml(artwork.date_display)}</p>
                 <p class="mb-2"><strong>Medium:</strong> ${artwork.medium_display || "Not specified"}</p>
                 <p class="mb-2"><strong>Dimensions:</strong> ${artwork.dimensions || "Not specified"}</p>
                 <p class="mb-2"><strong>Place of Origin:</strong> ${artwork.place_of_origin || "Not specified"}</p>
@@ -485,7 +510,7 @@
         // Add click event listeners to the artwork images
         document.querySelectorAll('.artwork-image').forEach(img => {
           img.addEventListener('click', function() {
-            openImageModal(this.dataset.fullImage, this.alt);
+            openImageModal(this.dataset.fullImage, this.alt, this.dataset.fallbackImage);
           });
         });
       }
@@ -754,19 +779,55 @@
       loadDepartments();
       loadArtworks(currentPage, true);
 
-      function openImageModal(imageUrl, imageAlt) {
+      function openImageModal(imageUrl, imageAlt, fallbackUrl) {
         const modal = document.getElementById('image-modal');
         const modalImage = document.getElementById('modal-image');
-        modalImage.src = imageUrl;
-        modalImage.alt = imageAlt;
+        const loading = document.getElementById('modal-loading');
+        const error = document.getElementById('modal-error');
+
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        modalImage.classList.add('hidden');
+        error.classList.add('hidden');
+        modalImage.alt = imageAlt;
+
+        if (!imageUrl) {
+          error.classList.remove('hidden');
+          return;
+        }
+
+        loading.classList.remove('hidden');
+
+        // 1686px exists only for public domain works; fall back to the 843px
+        // derivative already shown in the grid before giving up.
+        modalImage.onload = () => {
+          loading.classList.add('hidden');
+          modalImage.classList.remove('hidden');
+        };
+        modalImage.onerror = () => {
+          if (fallbackUrl && modalImage.src !== fallbackUrl) {
+            modalImage.src = fallbackUrl;
+            return;
+          }
+          loading.classList.add('hidden');
+          error.classList.remove('hidden');
+        };
+        modalImage.src = imageUrl;
       }
 
       function closeImageModal() {
         const modal = document.getElementById('image-modal');
+        const modalImage = document.getElementById('modal-image');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        // Stop an in-flight download and avoid flashing the previous artwork
+        // the next time the modal is opened.
+        modalImage.onload = null;
+        modalImage.onerror = null;
+        modalImage.removeAttribute('src');
+        modalImage.classList.add('hidden');
+        document.getElementById('modal-loading').classList.add('hidden');
+        document.getElementById('modal-error').classList.add('hidden');
       }
 
       // Add event listener for closing the image modal
